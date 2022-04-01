@@ -92,5 +92,5 @@ expr ::= NOT:op expr:e {: RESULT = new Arbre((String)op,e,null)  ; :}
        | NIL	{: RESULT = new Arbre(null,null,null); :}
        | ENTIER:n	{: RESULT = new Arbre(Integer.toString(n),null,null); :}	
        | IDENT:nom	{: RESULT = new Arbre(nom,null,null); :}				
-       | PAR_G sequence:e PAR_D {: RESULT = new Arbre("()", e , null); :}	
+       | PAR_G sequence:e PAR_D {: RESULT = new Arbre("", e , null); :}	
        ;
