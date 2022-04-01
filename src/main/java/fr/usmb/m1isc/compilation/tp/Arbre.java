@@ -40,8 +40,11 @@ public class Arbre {
 		else if(getArbreD()==null) {
 			return "("+ racine +" "+getArbreG().toString() +")";
 		}
+		if (racine!=null) {
+			return "("+racine +" "+getArbreG().toString()+" "+getArbreD().toString() +")";
+		}
+		return "";
 		
-		return "("+racine +" "+getArbreG().toString()+" "+getArbreD().toString() +")";
 		
 	}
 	

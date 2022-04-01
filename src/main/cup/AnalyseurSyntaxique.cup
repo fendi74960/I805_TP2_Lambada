@@ -69,13 +69,13 @@ sequence ::= expression:e1 SEMI  sequence:e2 {:  RESULT = new Arbre(";",e1,e2) ;
 // une expession est soit une affectation ,une              
 expression ::= expr:e {: RESULT = e ;:}
              | LET IDENT:nom EGAL expr:e {: RESULT = new Arbre("LET",new Arbre(nom,null,null),e) ;  :}              
-             | WHILE expr:cond DO expression:e 
-             | IF expr:cond THEN expression:a1 ELSE expression:a2 
+             | WHILE expr:cond DO expression:e {: RESULT = new Arbre("WHILE",cond,e);  :}
+             | IF expr:cond THEN expression:a1 ELSE expression:a2 {: RESULT = new Arbre("IF", cond, new Arbre("THEN",a1,a2));  :}
              | error // reprise d'erreurs
              ;
 
 // expression arithmetiques et logiques 
-expr ::= NOT:op expr:e 
+expr ::= NOT:op expr:e {: RESULT = new Arbre((String)op,e,null)  ; :} 
        | expr:e1 AND expr:e2    {: RESULT = new Arbre("&&",e1,e2)  ; :} 
        | expr:e1 OR expr:e2        {: RESULT = new Arbre("||",e1,e2)  ; :} 
        | expr:e1 EGAL expr:e2    {: RESULT = new Arbre("=",e1,e2)  ; :} 
@@ -86,12 +86,11 @@ expr ::= NOT:op expr:e
        | expr:e1 MUL expr:e2    {: RESULT = new Arbre("*",e1,e2)  ; :} 
        | expr:e1 DIV expr:e2    {: RESULT = new Arbre("/",e1,e2)  ; :} 
        | expr:e1 MOD expr:e2    {: RESULT = new Arbre("%",e1,e2)  ; :} 
-       
        | MOINS expr:e  {: RESULT = new Arbre("-",e,null)  ; :}             %prec MOINS_UNAIRE
-       | OUTPUT expr:e			
-       | INPUT					
-       | NIL	
+       | OUTPUT expr:e	{: RESULT = new Arbre("OUTPUT",e,null); :}		
+       | INPUT	{: RESULT = new Arbre("INPUT",null,null); :}
+       | NIL	{: RESULT = new Arbre(null,null,null); :}
        | ENTIER:n	{: RESULT = new Arbre(Integer.toString(n),null,null); :}	
        | IDENT:nom	{: RESULT = new Arbre(nom,null,null); :}				
-       | PAR_G sequence:e PAR_D 	
+       | PAR_G sequence:e PAR_D {: RESULT = new Arbre("()", e , null); :}	
        ;
