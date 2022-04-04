@@ -1,5 +1,7 @@
 package fr.usmb.m1isc.compilation.tp;
 
+import java.util.HashMap;
+
 public class Arbre {
 	private String racine;
 	private Arbre arbreG;
@@ -45,6 +47,15 @@ public class Arbre {
 		}
 		return "";
 		
+		
+	}
+	
+	public String toAssembly(HashMap<String,String> vars ) {
+		
+		System.out.println(vars.values());
+		
+		
+		return "";
 		
 	}
 	
