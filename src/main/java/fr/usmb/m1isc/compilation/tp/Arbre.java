@@ -65,56 +65,66 @@ public class Arbre {
 			text+="\t" + elem + "DD\n";
 		}
 		text += "DATA ENDS\n" + "CODE SEGMENT\n";
-		text+=convertArbre(this,true, vars);
+		text+=convertArbre(this,true, vars,false);
 		//convertArbre(this,true, vars);
         
         text += "CODE ENDS";
         return text;
     }
 	
-	private String convertArbre(Arbre arbre, boolean sens,List<String> vars) {
+	private String convertArbre(Arbre arbre, boolean sens,List<String> vars,boolean lastOp) {
 		String text = "";
 		
 		switch (arbre.racine) {
 			case ";":
-				text += convertArbre(arbre.getArbreG(), !sens,vars) + "\n" + convertArbre(arbre.getArbreD(), !sens,vars);
+				text += convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
+				if(arbre.getArbreD().racine==";")
+					text += convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
+				else {
+					text += convertArbre(arbre.getArbreD(), !sens,vars,true);
+				}
 						
 				break;
 				
 			case "LET":
-				text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars) + convertArbre(arbre.getArbreG(), !sens,vars);
-				text += "mov eax, "+ arbre.getArbreG().racine + "\n";
-				text += "push eax\n";
+				text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,1,lastOp) + convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
+				if(!lastOp) {
+					System.out.println("NO1\n");
+					text += "mov eax, "+ arbre.getArbreG().racine + "\n";
+					text += "push eax\n";
+				}
+				
 				break;
 				
 			case "*":
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
-					text+=convertArbre(arbre.getArbreG(), !sens,vars);
-					text+=convertArbre(arbre.getArbreD(), !sens,vars);
+					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
+					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
 					text+="pop ebx\n";
 					text+="mul ebx, eax\n";
 					text+="mov eax, ebx\n";
 					text+="push eax\n";
 				}
 				else {
-					text+=convertArbre(arbre.getArbreD(), !sens,vars);
-					text+=convertArbre(arbre.getArbreG(), !sens,vars);
+					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
+					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
 					text+="mul eax, ebx\n";
 					text+="push eax\n";
 				}
 				break;
 			case "/":
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
-					text+=convertArbre(arbre.getArbreG(), !sens,vars);
-					text+=convertArbre(arbre.getArbreD(), !sens,vars);
+					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
+					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
 					text+="pop ebx\n";
 					text+="div ebx, eax\n";
 					text+="mov eax, ebx\n";
+					
 					text+="push eax\n";
 				}
 				else {
-					text+=convertArbre(arbre.getArbreD(), !sens,vars);
-					text+=convertArbre(arbre.getArbreG(), !sens,vars);
+					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
+					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
 					text+="div eax, ebx\n";
 					text+="push eax\n";
 				}
@@ -138,52 +148,62 @@ public class Arbre {
 	}
 	
 	//PARTIE DROITE
-	private String convertArbreLetPartieDroite(Arbre arbre, boolean sens,List<String> vars) {
+	private String convertArbreLetPartieDroite(Arbre arbre, boolean sens,List<String> vars,int profondeur,boolean lastOp) {
 		String text = "";
 		
 		switch (arbre.racine) {
 			case ";":
-				text += sens==true?
-						convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars) + "\n" + convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars):
-							convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars) + "\n" + convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars);
+				text += convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
+				if(arbre.getArbreD().racine==";")
+					text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1, lastOp);
+				else {
+					text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,true);
+				}
+						
 				break;
 				
 			case "LET":
-				text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars) + convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars);
-				
-				text += "mov eax, "+ arbre.getArbreG().racine + "\n";
-				text += "push eax\n";
+				text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp) + convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
+				if(!lastOp) {
+					System.out.println("NO\n");
+					text += "mov eax, "+ arbre.getArbreG().racine + "\n";
+					text += "push eax\n";
+				}
 				break;
 				
 			case "*":
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
-					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars);
-					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars);
+					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
 					text+="pop ebx\n";
 					text+="mul ebx, eax\n";
 					text+="mov eax, ebx\n";
-					text+="push eax\n";
 				}
 				else {
-					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars);
-					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars);
+					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
 					text+="mul eax, ebx\n";
+				}
+				
+				if(profondeur!=1 || !lastOp) {
 					text+="push eax\n";
 				}
 				break;
 			case "/":
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
-					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars);
-					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars);
+					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
 					text+="pop ebx\n";
 					text+="div ebx, eax\n";
 					text+="mov eax, ebx\n";
-					text+="push eax\n";
 				}
 				else {
-					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars);
-					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars);
+					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
 					text+="div eax, ebx\n";
+					
+				}
+				if(profondeur!=1 || !lastOp) {
 					text+="push eax\n";
 				}
 				break;
@@ -205,6 +225,8 @@ public class Arbre {
 		}
 		return text;
 	}
+	
+	
 	private boolean isVar(List<String> vars,String value) {
 		for (String string : vars) {
 			if(string.equals(value)) {
