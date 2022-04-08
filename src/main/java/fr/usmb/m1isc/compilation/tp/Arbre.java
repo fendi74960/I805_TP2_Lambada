@@ -91,7 +91,7 @@ public class Arbre {
 		text += "DATA ENDS\n" + "CODE SEGMENT\n";
 
         //On convertie le code
-		text+=convertArbre(this,true, vars,false);
+		text+=convertArbre(this, vars, false);
         
         text += "CODE ENDS";
         return text;
@@ -120,12 +120,10 @@ public class Arbre {
 		return l;
 	}
 
-    //! nettoyer le sens
-
     //Permet de convertir un arbre en code Assembly
     //Cette fonction va se rappeler récursivement
     //Elle a besoin d'un arbre, d'une HashMap, et d'une variable pour savoir si il y a une opération qui a eu lieu
-	private String convertArbre(Arbre arbre, boolean sens, List<String> vars, boolean lastOp) {
+	private String convertArbre(Arbre arbre, List<String> vars, boolean lastOp) {
 		String text = "";
 		
         //On trouve le type de l'abre
@@ -133,17 +131,17 @@ public class Arbre {
 
             //Si c'est un ";"
 			case SEMI:
-				text += convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
+				text += convertArbre(arbre.getArbreG(),vars,lastOp);
 				if(arbre.getArbreD().racine == ";")
-					text += convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
+					text += convertArbre(arbre.getArbreD(),vars,lastOp);
 				else {
-					text += convertArbre(arbre.getArbreD(), !sens,vars,true);
+					text += convertArbre(arbre.getArbreD(),vars,true);
 				}	
 				break;
 				
             //Si c'est un "let"
 			case LET:
-				text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,1,lastOp) + convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
+				text += convertArbreLetPartieDroite(arbre.getArbreD(),vars,1,lastOp) + convertArbre(arbre.getArbreG(),vars,lastOp);
 				if(!lastOp && !arbre.getArbreD().racine.equals("INPUT")) {
 					text += "\tmov eax, "+ arbre.getArbreG().racine + "\n";
 					text += "\tpush eax\n";
@@ -153,16 +151,16 @@ public class Arbre {
             //Si c'est une "multiplication"
 			case MUL:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
-					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
-					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
+					text+=convertArbre(arbre.getArbreG(),vars,lastOp);
+					text+=convertArbre(arbre.getArbreD(),vars,lastOp);
 					text+="\tpop ebx\n";
 					text+="\tmul ebx, eax\n";
 					text+="\tmov eax, ebx\n";
 					text+="\tpush eax\n";
 				}
 				else {
-					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
-					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
+					text+=convertArbre(arbre.getArbreD(),vars,lastOp);
+					text+=convertArbre(arbre.getArbreG(),vars,lastOp);
 					text+="\tmul eax, ebx\n";
 					text+="\tpush eax\n";
 				}
@@ -171,8 +169,8 @@ public class Arbre {
             //Si c'est une division
 			case DIV:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
-					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
-					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
+					text+=convertArbre(arbre.getArbreG(),vars,lastOp);
+					text+=convertArbre(arbre.getArbreD(),vars,lastOp);
 					text+="\tpop ebx\n";
 					text+="\tdiv ebx, eax\n";
 					text+="\tmov eax, ebx\n";
@@ -180,8 +178,8 @@ public class Arbre {
 					text+="\tpush eax\n";
 				}
 				else {
-					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
-					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
+					text+=convertArbre(arbre.getArbreD(),vars,lastOp);
+					text+=convertArbre(arbre.getArbreG(),vars,lastOp);
 					text+="\tdiv eax, ebx\n";
 					text+="\tpush eax\n";
 				}
@@ -318,24 +316,24 @@ public class Arbre {
 	//PARTIE DROITE
     //Gere la partie droite des let qui possede potentiellement des variables et donc faut pop la stack pour les recuperer
     //C'est quasiment la meme fonction que convertArbre mais elle a un parametre en plus permettant de savoir si on doit faire certain push en fonction si on est a la fin de la methode et a la bonne profondeur
-	private String convertArbreLetPartieDroite(Arbre arbre, boolean sens,List<String> vars,int profondeur,boolean lastOp) {
+	private String convertArbreLetPartieDroite(Arbre arbre,List<String> vars,int profondeur,boolean lastOp) {
 		String text = "";
 		
 		switch (arbre.type) {
             //
 			case SEMI:
-				text += convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
+				text += convertArbreLetPartieDroite(arbre.getArbreG(),vars,profondeur+1,lastOp);
 				if(arbre.getArbreD().racine==";")
-					text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1, lastOp);
+					text += convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1, lastOp);
 				else {
-					text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,true);
+					text += convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1,true);
 				}
 						
 				break;
 			
             //
 			case LET:
-				text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp) + convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
+				text += convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1,lastOp) + convertArbreLetPartieDroite(arbre.getArbreG(),vars,profondeur+1,lastOp);
 				if(!lastOp) {
 					text += "\tmov eax, "+ arbre.getArbreG().racine + "\n";
 					text += "\tpush eax\n";
@@ -344,15 +342,15 @@ public class Arbre {
 			//En fonction de si le prochain arbre a une operation cela changera le sens de l'operation et mov/pop ou non
 			case MUL:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
-					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
-					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreG(),vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1,lastOp);
 					text+="\tpop ebx\n";
 					text+="\tmul ebx, eax\n";
 					text+="\tmov eax, ebx\n";
 				}
 				else {
-					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
-					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreG(),vars,profondeur+1,lastOp);
 					text+="\tmul eax, ebx\n";
 				}
 				
@@ -362,15 +360,15 @@ public class Arbre {
 				break;
 			case DIV:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
-					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
-					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreG(),vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1,lastOp);
 					text+="\tpop ebx\n";
 					text+="\tdiv ebx, eax\n";
 					text+="\tmov eax, ebx\n";
 				}
 				else {
-					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
-					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1,lastOp);
+					text+=convertArbreLetPartieDroite(arbre.getArbreG(),vars,profondeur+1,lastOp);
 					text+="\tdiv eax, ebx\n";
 					
 				}
