@@ -12,10 +12,20 @@ public class Arbre {
 	public static String stack = "ebx";
 	public String[] op ={"/","*","+","-"};
 	
+	public static enum Type {SEMI,LET,WHILE,INPUT,OUTPUT,INF,PLUS,MOINS,DIV,MUL,MOD,ENTIER,VIDE,EQ,IF,THEN,NOT,AND,OR,INFEQ,MINUS,NULL,IDENT};
+	private Type type;
+	
+	
 	private String racine;
 	private Arbre arbreG;
 	private Arbre arbreD;
 	
+	public Type getType() {
+		return type;
+	}
+	public void setType(Type type) {
+		this.type = type;
+	}
 	public String getRacine() {
 		return racine;
 	}
@@ -34,11 +44,13 @@ public class Arbre {
 	public void setArbreD(Arbre arbreD) {
 		this.arbreD = arbreD;
 	}
-	public Arbre(String racine, Arbre arbreG, Arbre arbreD) {
+	
+	public Arbre(String racine, Arbre arbreG, Arbre arbreD,Type type) {
 		super();
 		this.racine = racine;
 		this.arbreG = arbreG;
 		this.arbreD = arbreD;
+		this.type=type;
 	}
 	@Override
 	public String toString() {
@@ -93,8 +105,8 @@ public class Arbre {
 	private String convertArbre(Arbre arbre, boolean sens,List<String> vars,boolean lastOp) {
 		String text = "";
 		
-		switch (arbre.racine) {
-			case ";":
+		switch (arbre.type) {
+			case SEMI:
 				text += convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
 				if(arbre.getArbreD().racine==";")
 					text += convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
@@ -104,7 +116,7 @@ public class Arbre {
 						
 				break;
 				
-			case "LET":
+			case LET:
 				text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,1,lastOp) + convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
 				if(!lastOp && !arbre.getArbreD().racine.equals("INPUT")) {
 					text += "\t mov eax, "+ arbre.getArbreG().racine + "\n";
@@ -113,7 +125,7 @@ public class Arbre {
 				
 				break;
 				
-			case "*":
+			case MUL:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
 					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
 					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
@@ -129,7 +141,7 @@ public class Arbre {
 					text+="\t push eax\n";
 				}
 				break;
-			case "/":
+			case DIV:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
 					text+=convertArbre(arbre.getArbreG(), !sens,vars,lastOp);
 					text+=convertArbre(arbre.getArbreD(), !sens,vars,lastOp);
@@ -146,7 +158,7 @@ public class Arbre {
 					text+="\t push eax\n";
 				}
 				break;
-			case "WHILE":
+			case WHILE:
 				text+="debut_while_1:\n";
 				text+= convertArbreCond(arbre.getArbreG(),vars);
 				text+="faux_gt_1:\n";
@@ -158,26 +170,22 @@ public class Arbre {
 				text+="sortie_while_1:\n";
 				break;
 				
-			case "INPUT":
+			case INPUT:
 				text+="\t in eax\n";
 				break;
-			case "OUTPUT":
+			case OUTPUT:
 				text+="\t mov eax,"+ arbre.getArbreG().racine+"\n";
 				text+="\t out eax\n";
 				break;
+			case ENTIER:
+				text+="\t mov eax, " + arbre.racine +"\n";
+				break;
+			case IDENT:
+				text+="\t mov "+arbre.racine+", eax\n";
+				break;
 	
 			default:
-				if(isNumeric(arbre.racine))
-				{
-					text+="\t mov eax, " + arbre.racine +"\n";
-				}
-				else if(isVar(vars,arbre.racine))
-				{
-					text+="\t mov "+arbre.racine+", eax\n";
-				}
-				else {
-					text += "Error";
-				}
+				text += "Error";
 				break;
 		}
 		return text;
@@ -186,18 +194,18 @@ public class Arbre {
 	private String convertArbreAction(Arbre arbre,List<String> vars) {
 		String text = "";
 		
-		switch (arbre.racine) {
-			case ";":
+		switch (arbre.type) {
+			case SEMI:
 				text += convertArbreAction(arbre.getArbreG(),vars);
 				text += convertArbreAction(arbre.getArbreD(),vars);
 						
 				break;
-			case "LET":
+			case LET:
 				text += convertArbreAction(arbre.getArbreD(),vars);
 				text += "\t mov "+arbre.getArbreG().racine+", eax\n";
 
 				break;
-			case "%":
+			case MOD:
 				text += convertArbreAction(arbre.getArbreD(),vars);
 				text += "\t push eax\n";
 				text += convertArbreAction(arbre.getArbreG(),vars);
@@ -209,7 +217,7 @@ public class Arbre {
 				break;
 				
 				
-			case "*":
+			case MUL:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
 					text+=convertArbreAction(arbre.getArbreG(),vars);
 					text+=convertArbreAction(arbre.getArbreD(),vars);
@@ -224,7 +232,7 @@ public class Arbre {
 				}
 
 				break;
-			case "/":
+			case DIV:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
 					text+=convertArbreAction(arbre.getArbreG(),vars);
 					text+=convertArbreAction(arbre.getArbreD(),vars);
@@ -239,21 +247,19 @@ public class Arbre {
 					
 				}
 				break;
-			case "":
+			case VIDE:
 				text+=convertArbreAction(arbre.getArbreG(),vars);
 				break;
+				
+			case ENTIER:
+				text+="\t mov eax, " + arbre.racine +"\n";
+				break;
+				
+			case IDENT:
+				text+="\t mov eax, "+ arbre.racine+"\n";
+				break;
 			default:
-				if(isNumeric(arbre.racine))
-				{
-					text+="\t mov eax, " + arbre.racine +"\n";
-				}
-				else if(isVar(vars,arbre.racine))
-				{
-					text+="\t mov eax, "+ arbre.racine+"\n";
-				}
-				else {
-					text += "Error";
-				}
+				text += "Error";
 					
 				break;
 		}
@@ -263,9 +269,9 @@ public class Arbre {
 		// TODO Auto-generated method stub
 		String text = "";
 		
-		switch (arbre.racine) {
+		switch (arbre.type) {
 			
-			case "<":
+			case INF:
 				text+=convertArbreCond(arbre.getArbreG(),vars);
 				text+="\t push eax\n";
 				text+=convertArbreCond(arbre.getArbreD(),vars);
@@ -276,22 +282,17 @@ public class Arbre {
 				text+="\t jmp sortie_gt_1\n";
 				
 				break;
-			case "":
+			case VIDE:
 				text+=convertArbreCond(arbre.getArbreG(),vars);
 				break;
+			case ENTIER:
+				text+="\t mov eax, " + arbre.racine +"\n";
+				break;
+			case IDENT:
+				text+="\t mov eax, "+ arbre.racine +"\n";
+				break;
 			default:
-				if(isNumeric(arbre.racine))
-				{
-					text+="\t mov eax, " + arbre.racine +"\n";
-				}
-				else if(isVar(vars,arbre.racine))
-				{
-					text+="\t mov eax, "+ arbre.racine +"\n";
-				}
-				else {
-					System.out.println("\nYOOOO" + arbre.racine + "\n");
-					text += "Error";
-				}
+				text += "Error";
 					
 				break;
 		}
@@ -303,8 +304,8 @@ public class Arbre {
 	private String convertArbreLetPartieDroite(Arbre arbre, boolean sens,List<String> vars,int profondeur,boolean lastOp) {
 		String text = "";
 		
-		switch (arbre.racine) {
-			case ";":
+		switch (arbre.type) {
+			case SEMI:
 				text += convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
 				if(arbre.getArbreD().racine==";")
 					text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1, lastOp);
@@ -314,7 +315,7 @@ public class Arbre {
 						
 				break;
 				
-			case "LET":
+			case LET:
 				text += convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp) + convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
 				if(!lastOp) {
 					text += "\t mov eax, "+ arbre.getArbreG().racine + "\n";
@@ -322,7 +323,7 @@ public class Arbre {
 				}
 				break;
 				
-			case "*":
+			case MUL:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
 					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
 					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
@@ -340,7 +341,7 @@ public class Arbre {
 					text+="\t push eax\n";
 				}
 				break;
-			case "/":
+			case DIV:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
 					text+=convertArbreLetPartieDroite(arbre.getArbreG(), !sens,vars,profondeur+1,lastOp);
 					text+=convertArbreLetPartieDroite(arbre.getArbreD(), !sens,vars,profondeur+1,lastOp);
@@ -358,45 +359,23 @@ public class Arbre {
 					text+="\t push eax\n";
 				}
 				break;
-			case "INPUT":
+			case INPUT:
 				text+="\t in eax\n";
 				break;
+				
+			case ENTIER:
+				text+="\t mov eax, " + arbre.racine +"\n";
+				break;
+				
+			case IDENT:
+				text+="\t pop ebx\n";
+				break;
 			default:
-				if(isNumeric(arbre.racine))
-				{
-					text+="\t mov eax, " + arbre.racine +"\n";
-				}
-				else if(isVar(vars,arbre.racine))
-				{
-					text+="\t pop ebx\n";
-				}
-				else {
-					text += "Error";
-				}
-					
+				text += "Error";
 				break;
 		}
 		return text;
 	}
 	
 	
-	private boolean isVar(List<String> vars,String value) {
-		for (String string : vars) {
-			if(string.equals(value)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	public boolean isNumeric(String strNum) {
-        if (strNum == null) {
-            return false;
-        }
-        try {
-            double d = Double.parseDouble(strNum);
-        } catch (NumberFormatException nfe) {
-            return false;
-        }
-        return true;
-    }
 }
