@@ -320,25 +320,7 @@ public class Arbre {
 		String text = "";
 		
 		switch (arbre.type) {
-            //
-			case SEMI:
-				text += convertArbreLetPartieDroite(arbre.getArbreG(),vars,profondeur+1,lastOp);
-				if(arbre.getArbreD().racine==";")
-					text += convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1, lastOp);
-				else {
-					text += convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1,true);
-				}
-						
-				break;
-			
-            //
-			case LET:
-				text += convertArbreLetPartieDroite(arbre.getArbreD(),vars,profondeur+1,lastOp) + convertArbreLetPartieDroite(arbre.getArbreG(),vars,profondeur+1,lastOp);
-				if(!lastOp) {
-					text += "\tmov eax, "+ arbre.getArbreG().racine + "\n";
-					text += "\tpush eax\n";
-				}
-				break;
+
 			//En fonction de si le prochain arbre a une operation cela changera le sens de l'operation et mov/pop ou non
 			case MUL:
 				if(Arrays.stream(op).anyMatch(arbre.getArbreG().racine::equals)) {
