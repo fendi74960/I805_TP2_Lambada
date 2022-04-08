@@ -1,5 +1,8 @@
 package fr.usmb.m1isc.compilation.tp;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -377,5 +380,27 @@ public class Arbre {
 		return text;
 	}
 	
+	static public void makeFile(String str) {
+		try {
+		      File myObj = new File("pgcd.asm");
+		      if (myObj.createNewFile()) {
+		        System.out.println("File created: " + myObj.getName());
+		      } else {
+		        System.out.println("File already exists.");
+		      }
+		    } catch (IOException e) {
+		      System.out.println("An error occurred.");
+		      e.printStackTrace();
+		    }
+		try {
+	      FileWriter myWriter = new FileWriter("pgcd.asm");
+	      myWriter.write(str);
+	      myWriter.close();
+	      System.out.println("Successfully wrote to the file.");
+	    } catch (IOException e) {
+	      System.out.println("An error occurred.");
+	      e.printStackTrace();
+	    }
+	}
 	
 }
